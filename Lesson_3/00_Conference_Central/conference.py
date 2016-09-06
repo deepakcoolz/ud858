@@ -19,6 +19,7 @@ import endpoints
 from protorpc import messages
 from protorpc import message_types
 from protorpc import remote
+import utils
 
 from google.appengine.ext import ndb
 
@@ -40,7 +41,7 @@ API_EXPLORER_CLIENT_ID = endpoints.API_EXPLORER_CLIENT_ID
                 allowed_client_ids=[WEB_CLIENT_ID, API_EXPLORER_CLIENT_ID],
                 scopes=[EMAIL_SCOPE])
 class ConferenceApi(remote.Service):
-    """Conference API v0.1"""
+    """Conference API v0.1 by Deepak"""
 
 # - - - Profile objects - - - - - - - - - - - - - - - - - - -
 
@@ -70,19 +71,25 @@ class ConferenceApi(remote.Service):
         #         and import getUserId from it
         # step 2. get user id by calling getUserId(user)
         # step 3. create a new key of kind Profile from the id
+	
+	user_id = utils.getUserID(user)
+	p_key = ndb.Key(Profile, user_id)
+
 
         # TODO 3
         # get the entity from datastore by using get() on the key
-        profile = None
+	
+        profile = p_key.get()
         if not profile:
             profile = Profile(
-                key = None, # TODO 1 step 4. replace with the key from step 3
+                key = p_key, # TODO 1 step 4. replace with the key from step 3
                 displayName = user.nickname(), 
                 mainEmail= user.email(),
                 teeShirtSize = str(TeeShirtSize.NOT_SPECIFIED),
             )
             # TODO 2
             # save the profile to datastore
+	    profile.put()
 
         return profile      # return Profile
 
@@ -101,7 +108,7 @@ class ConferenceApi(remote.Service):
                         setattr(prof, field, str(val))
             # TODO 4
             # put the modified profile to datastore
-
+	    prof.put()
         # return ProfileForm
         return self._copyProfileToForm(prof)
 

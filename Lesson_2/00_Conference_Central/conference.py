@@ -17,6 +17,7 @@ from datetime import datetime
 import json
 import os
 import time
+import utils
 
 import endpoints
 from protorpc import messages
@@ -67,21 +68,25 @@ class ConferenceApi(remote.Service):
         ## TODO 2
         ## step 1: make sure user is authed
         ## uncomment the following lines:
-        # user = endpoints.get_current_user()
-        # if not user:
-        #     raise endpoints.UnauthorizedException('Authorization required')
-        profile = None
+        user = endpoints.get_current_user()
+        if not user:
+            raise endpoints.UnauthorizedException('Authorization required')
+        user_id = utils.getUserId(user)
+	p.key = ndb.Key(Profile,user_id)
+	profile = None
         ## step 2: create a new Profile from logged in user data
         ## you can use user.nickname() to get displayName
         ## and user.email() to get mainEmail
         if not profile:
             profile = Profile(
-                userId = None,
-                key = None,
-                displayName = "Test", 
-                mainEmail= None,
-                teeShirtSize = str(TeeShirtSize.NOT_SPECIFIED),
-            )
+               userId = None,
+               key = None,
+               displayName = user.nickname(), 
+               mainEmail= user.email(),
+               teeShirtSize = str(TeeShirtSize.NOT_SPECIFIED),
+           )
+	profile.put()
+
 
         return profile      # return Profile
 
@@ -112,11 +117,11 @@ class ConferenceApi(remote.Service):
     # TODO 1
     # 1. change request class
     # 2. pass request to _doProfile function
-    @endpoints.method(message_types.VoidMessage, ProfileForm,
+    @endpoints.method(ProfileMiniForm, ProfileForm,
             path='profile', http_method='POST', name='saveProfile')
     def saveProfile(self, request):
         """Update & return user profile."""
-        return self._doProfile()
+        return self._doProfile(request)
 
 
 # registers API
